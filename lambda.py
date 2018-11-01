@@ -3,26 +3,19 @@ import requests
 from elasticsearch import Elasticsearch
 
 def lambda_handler(event, context):
-    params = event["queryStringParameters"]
-    # search_string = event["queryStringParameters"].get('search_string')
-    # print("Search string is:")
-    # print(search_string)
+    params = event.get("queryStringParameters", {'name': 'hot sauce'})
     es = Elasticsearch([{'host': 'vpc-sali-gtqooycfzlb4e5nnexd3hgubcm.us-east-1.es.amazonaws.com', 'scheme': 'https', 'port': 443 }])
-    # print('Doing a GET on  HTTPS......')
-    # r=requests.get("https://vpc-sali-gtqooycfzlb4e5nnexd3hgubcm.us-east-1.es.amazonaws.com")
-    # print(r)
-    print('Pinging es...')
     if es.ping():
-        response_str = ''
-        res = es.search(index="customer", body={"query": {"match": {"name": params.get('search_string', 'Joe')}}})
-        for doc in res['hits']['hits']:
-            response_str = response_str + '\n' + str(doc['_score']) + doc['_source']['name']
+        results = []
+        res = es.search(index="food", body={"query": {"match_phrase_prefix": {"name": params['name']}}})
+        for doc in res['hits']['hits'][:5]:
+            results.append({'score': doc['_score'], 'name': doc['_source']['name'], 'rating': doc['_source']['rating']})
         return {
             "statusCode": 200,
-            "body": json.dumps(str(params) + 'Hello from Sali! Connected to ES.' + response_str)
+            "body": json.dumps(results)
         }
     else:
         return {
             "statusCode": 500,
-            "body": json.dumps('Could not connect to ES')
+            "body": json.dumps('Could not connect to ElasticSearch')
         }
