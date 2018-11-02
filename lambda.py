@@ -12,7 +12,11 @@ def lambda_handler(event, context):
             results.append({'score': doc['_score'], 'name': doc['_source']['name'], 'rating': doc['_source']['rating']})
         return {
             "statusCode": 200,
-            "body": json.dumps(results)
+            "body": json.dumps(results),
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
+            },
         }
     else:
         return {
